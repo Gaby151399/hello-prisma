@@ -1,26 +1,76 @@
-import { Injectable } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, Status } from '@prisma/client';
+import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class ProductsService {
-  create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+  constructor( private readonly databaseService: DatabaseService){}
+
+  async create(data: Prisma.ProductCreateInput) {
+    try {
+      return await this.databaseService.product.create({
+        data
+      })
+    } catch (error) {
+      throw new error(error)
+    }
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll(status?: Status) {
+    if(!status){
+      return await this.databaseService.product.findMany({});
+    }
+    
+    return this.databaseService.product.findMany({
+      where: {
+        status: status
+      }
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: number) {
+    try {
+      const product = await this.databaseService.product.findUnique({
+        where: {id}
+      });
+      
+      if(!product){
+        throw new NotFoundException(`Product #${id} not found`);
+      }
+
+      return product;
+    } catch (error) {
+      throw new error(error)
+    }
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: number, data: Prisma.ProductUpdateInput) {
+    const productExists = await this.findOne(id);
+    if(!productExists){
+      throw new NotFoundException(`Product #${id} not found`);
+    }
+
+    try {
+      return await this.databaseService.product.update({
+        where:{id},
+        data
+      })
+    } catch (error) {
+      throw new error(error)
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: number) {
+    const productExists = await this.findOne(id);
+    if(!productExists){
+      throw new NotFoundException(`Product #${id} not found`);
+    }
+    try {
+      return await this.databaseService.product.delete({
+        where:{id},
+      })
+    } catch (error) {
+      throw new error(error)
+    }
   }
 }
