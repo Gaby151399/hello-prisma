@@ -4,73 +4,33 @@ import { DatabaseService } from 'src/database/database.service';
 
 @Injectable()
 export class ProductsService {
-  constructor( private readonly databaseService: DatabaseService){}
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(data: Prisma.ProductCreateInput) {
-    try {
-      return await this.databaseService.product.create({
-        data
-      })
-    } catch (error) {
-      throw new error(error)
-    }
+    return this.databaseService.product.create({ data });
   }
 
   async findAll(status?: Status) {
-    if(!status){
-      return await this.databaseService.product.findMany({});
-    }
-    
     return this.databaseService.product.findMany({
-      where: {
-        status: status
-      }
+      where: status ? { status } : undefined,
     });
   }
 
   async findOne(id: number) {
-    try {
-      const product = await this.databaseService.product.findUnique({
-        where: {id}
-      });
-      
-      if(!product){
-        throw new NotFoundException(`Product #${id} not found`);
-      }
-
-      return product;
-    } catch (error) {
-      throw new error(error)
+    const product = await this.databaseService.product.findUnique({ where: { id: id } });
+    if (!product) {
+      throw new NotFoundException(`Product #${id} not found`);
     }
+    return product;
   }
 
   async update(id: number, data: Prisma.ProductUpdateInput) {
-    const productExists = await this.findOne(id);
-    if(!productExists){
-      throw new NotFoundException(`Product #${id} not found`);
-    }
-
-    try {
-      return await this.databaseService.product.update({
-        where:{id},
-        data
-      })
-    } catch (error) {
-      throw new error(error)
-    }
+    await this.findOne(id);
+    return this.databaseService.product.update({ where: { id }, data });
   }
 
   async remove(id: number) {
-    const productExists = await this.findOne(id);
-    if(!productExists){
-      throw new NotFoundException(`Product #${id} not found`);
-    }
-    try {
-      return await this.databaseService.product.delete({
-        where:{id},
-      })
-    } catch (error) {
-      throw new error(error)
-    }
+    await this.findOne(id);
+    return this.databaseService.product.delete({ where: { id } });
   }
 }

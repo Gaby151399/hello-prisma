@@ -17,7 +17,7 @@ model Product {
   name String @unique
   description String
   price Float
-  status Status
+  status Status @default(STOCK)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
